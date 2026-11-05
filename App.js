@@ -219,12 +219,7 @@ export default function App() {
         if (e.evento === 'entrega') setAviso({ texto: `✅ Se entregó la pastilla de la partición ${e.slot}`, color: '#16a34a' });
         if (e.evento === 'omitida') setAviso({ texto: `⚠ Se omitió la partición ${e.slot}: pasaron más de 30 minutos`, color: '#dc2626' });
         if (e.evento === 'horarios_ok') setAviso({ texto: `💾 El pastillero guardó ${e.slot} horario(s)`, color: '#2563eb' });
-        if (e.evento === 'inicio') setAviso({ texto: '⏮ Carrusel alineado', color: '#2563eb' });
-        if (e.evento === 'alineado') setAviso({ texto: '✅ Alineado en la partición 0', color: '#16a34a' });
-        if (e.evento === 'no_alineado') setAviso({ texto: '⚠ NO está alineado en la partición 0', color: '#dc2626' });
-        if (e.evento === 'sin_sensor') setAviso({ texto: 'ℹ Sin sensor: no se puede verificar', color: '#d97706' });
-        if (e.evento === 'moviendo') setAviso({ texto: '🔄 El carrusel se está moviendo', color: '#2563eb' });
-        if (e.evento === 'alinear_fallo') setAviso({ texto: '⚠ No se encontró la partición 0. Revisá el sensor y el imán', color: '#dc2626' });
+        if (e.evento === 'inicio') setAviso({ texto: '✅ Inicio confirmado: la partición 0 está en la salida', color: '#16a34a' });
       } catch (x) {}
     }
   };
@@ -334,6 +329,8 @@ export default function App() {
   else if (sinRed) { estadoTexto = '🔴 Sin conexión. Revisá que el celular esté en el WiFi del pastillero'; estadoColor = '#dc2626'; }
   else { estadoTexto = '⏳ Conectando...'; estadoColor = '#555'; }
 
+  const pastilleroListo = conectado && espOnline;
+
   return (
     <ScrollView style={styles.fondo} contentContainerStyle={{ padding: 16, paddingTop: 50 }}
       keyboardShouldPersistTaps="handled" scrollEnabled={scrollOn}>
@@ -345,20 +342,14 @@ export default function App() {
           <Text style={styles.alerta}>⚠ El pastillero todavía no tiene la hora</Text>
         )}
         {estadoEsp && espOnline && !estadoEsp.posicion && (
-          <Text style={styles.alerta}>⚠ Girá el carrusel a mano hasta que la partición 0 quede en la salida y tocá "Ya alineé el inicio"</Text>
-        )}
-        {estadoEsp && espOnline && estadoEsp.posicion && (
-          <Text style={{ marginTop: 8, fontWeight: 'bold', color:
-            estadoEsp.moviendo ? '#2563eb' :
-            !estadoEsp.sensor ? '#d97706' :
-            estadoEsp.alineado ? '#16a34a' : '#dc2626' }}>
-            {estadoEsp.moviendo ? '🔄 Moviéndose...' :
-             !estadoEsp.sensor ? 'ℹ Sin sensor: se confía en tu alineación manual' :
-             estadoEsp.alineado ? '✅ Alineado en la partición 0' : '⚠ No está alineado en la partición 0'}
+          <Text style={styles.alerta}>
+            ⚠ Girá el carrusel a mano hasta que la partición 0 quede en la salida y tocá "Ya alineé el inicio"
           </Text>
         )}
-        {estadoEsp && espOnline && estadoEsp.sensor && !estadoEsp.alineado && !estadoEsp.moviendo && (
-          <Boton titulo="🧭 Alinear automáticamente" onPress={() => comando('alinear')} color="#d97706" />
+        {estadoEsp && espOnline && estadoEsp.posicion && (
+          <Text style={{ marginTop: 8, fontWeight: 'bold', color: estadoEsp.moviendo ? '#2563eb' : '#16a34a' }}>
+            {estadoEsp.moviendo ? '🔄 Moviéndose...' : '✅ Inicio confirmado'}
+          </Text>
         )}
         {aviso.texto !== '' && (
           <Text style={{ marginTop: 8, fontWeight: 'bold', color: aviso.color }}>{aviso.texto}</Text>
@@ -412,9 +403,9 @@ export default function App() {
       </View>
 
       <View style={[styles.card, styles.botones]}>
-        <Boton titulo="⏮ Ya alineé el inicio" onPress={() => comando('inicio')} deshabilitado={!(conectado && espOnline)} />
-        <Boton titulo="🔍 Verificar alineación" onPress={() => comando('verificar')} deshabilitado={!(conectado && espOnline)} />
-        <Boton titulo="🔔 Probar alarma" onPress={() => comando('buzzer')} deshabilitado={!(conectado && espOnline)} />
+        <Boton titulo="⏮ Ya alineé el inicio" onPress={() => comando('inicio')}
+          deshabilitado={!pastilleroListo || (estadoEsp && estadoEsp.moviendo)} />
+        <Boton titulo="🔔 Probar alarma" onPress={() => comando('buzzer')} deshabilitado={!pastilleroListo} />
       </View>
 
       <TouchableOpacity onPress={() => setVerLog(!verLog)}>
